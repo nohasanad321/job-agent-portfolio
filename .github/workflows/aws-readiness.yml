@@ -1,0 +1,29 @@
+name: AWS deployment design (no infrastructure)
+on:
+  push:
+    paths:
+      - 'infra/aws/**'
+      - '.github/workflows/aws-readiness.yml'
+  pull_request:
+    paths:
+      - 'infra/aws/**'
+      - '.github/workflows/aws-readiness.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.9.8'
+      - name: Format check
+        working-directory: infra/aws
+        run: terraform fmt -check
+      - name: Initialize without backend
+        working-directory: infra/aws
+        run: terraform init -backend=false -input=false
+      - name: Validate syntax and provider schema
+        working-directory: infra/aws
+        run: terraform validate -no-color
