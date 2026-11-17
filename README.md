@@ -51,7 +51,7 @@ Controllers validate paging. Services filter against a known catalog. Cache is b
 - [x] Automated API tests
 - [x] Docker / Compose definition
 - [ ] Verify build/tests in a Java 21 runtime and exercise Docker Compose (changes were committed without executing tests in this environment)
-- [ ] GitHub Actions CI
+- [x] GitHub Actions workflow added (execution not yet confirmed)
 - [ ] AWS ECR / ECS Fargate deployment and CloudWatch observability
 - [ ] Architecture diagram, screenshots, deployment evidence, and portfolio write-up
 
