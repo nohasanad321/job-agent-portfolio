@@ -1,58 +1,160 @@
-# Job Agent Portfolio — Standalone API Demo
 
-A **public, self-contained Spring Boot 3.5 / Java 21** project demonstrating a synthetic job-discovery API, filtering, pagination, Redis cache-aside behavior, graceful operation when Redis is unavailable, containerization and automated endpoint tests.
+# Job Agent Portfolio
 
-**All job listings are fictional samples.** This repository does not retrieve real jobs, handle personal profiles, rank candidates, expose private matching rules, or depend on the private `job-agent-core` repository.
+A standalone Java 21 / Spring Boot 3.5 REST API demonstrating layered backend architecture, searchable synthetic job data, pagination, automated testing, Docker containerization, and infrastructure-as-code for AWS.
 
-## Quick start
+The application is self-contained and does not depend on private repositories or paid cloud services.
 
-```bash
-./mvnw clean test
-./mvnw spring-boot:run
-```
-Windows: `mvnw.cmd clean test` and `mvnw.cmd spring-boot:run`. Requires Java 21.
+## Features
 
-```bash
-curl 'http://localhost:8083/api/demo/jobs?region=Worldwide&skill=Java&page=0&size=5'
-curl 'http://localhost:8083/api/demo/jobs/DEMO-001'
-curl 'http://localhost:8083/actuator/health'
-```
+- REST endpoints for a synthetic job catalog
+- Text and location filtering
+- Pagination with response metadata
+- Layered controller, service, repository, and model structure
+- Automated application, controller, and service tests
+- Multi-stage Docker build
+- Docker Compose environment with Redis
+- AWS infrastructure design using Terraform
+- GitHub Actions for Java verification and Terraform validation
 
-## Run with Redis
+All job listings are fictional. No live recruitment providers are connected.
 
-```bash
-docker compose up --build
-```
+## Technology
 
-Redis is optional locally. The demo catalog is kept in memory, and cache failures fall back to it. The Redis health indicator is excluded so missing optional Redis does not mark the API unhealthy. Cache entries expire after 10 minutes.
+- Java 21
+- Spring Boot 3.5.7
+- Maven Wrapper
+- Spring Web and Actuator
+- JUnit and Spring Boot Test
+- Docker and Docker Compose
+- Redis 7 (container provisioned; caching not implemented)
+- Terraform and AWS ECS/Fargate deployment design
+- GitHub Actions
 
 ## API
 
-- `GET /api/demo/jobs`: optional query, region, type, seniority, skill, page (0-based), size (1–100)
-- `GET /api/demo/jobs/{id}`: one fictional job, or HTTP 404
-- `GET /actuator/health`: operational health
+### Search jobs
 
-Responses include `synthetic: true` and `source: DEMO_DATA_ONLY`.
+`GET /api/demo/jobs`
+
+Supported query parameters:
+
+| Parameter | Purpose |
+| --- | --- |
+| `q` | Text search |
+| `location` | Location filter |
+| `page` | Zero-based page index |
+| `size` | Page size |
+
+Example:
+
+```bash
+curl "http://localhost:8083/api/demo/jobs?page=0&size=2"
+```
+
+The response includes `jobs`, `page`, `size`, `totalElements`, and `totalPages`.
+
+### Get a job
+
+`GET /api/demo/jobs/{id}`
+
+Example:
+
+```bash
+curl http://localhost:8083/api/demo/jobs/demo-001
+```
+
+### Health check
+
+`GET /actuator/health`
+
+## Run locally
+
+Requirements: JDK 21.
+
+On Windows PowerShell:
+
+```powershell
+.\mvnw.cmd clean verify
+.\mvnw.cmd spring-boot:run
+```
+
+The application runs on port `8083` by default.
+
+## Run with Docker Compose
+
+Requirements: Docker Desktop with Docker Compose.
+
+```bash
+docker compose up --build -d
+```
+
+The API is exposed on host port `8084`, mapped to container port `8083`.
+
+```bash
+curl http://localhost:8084/actuator/health
+curl "http://localhost:8084/api/demo/jobs?page=0&size=2"
+```
+
+Stop the containers:
+
+```bash
+docker compose down
+```
+
+Docker Compose also starts Redis. Redis is available for future caching work but is not currently used by the job search implementation.
 
 ## Architecture
 
 ```text
-HTTP client → REST Controller → Filter Service → Redis (optional cache)
-                                     ↘ Synthetic in-memory catalog
+HTTP Client
+    |
+    v
+REST Controller
+    |
+    v
+Job Service
+    |
+    v
+Demo Repository
+    |
+    v
+Synthetic Job Catalog
 ```
 
-Controllers validate paging. Services filter against a known catalog. Cache is best-effort and only caches the whole synthetic catalog, not user-supplied queries. There is no account data, authentication or external provider integration.
+The application separates HTTP handling, business logic, data access, and response models.
 
-## Status and next milestones
+## Testing and CI
 
-- [x] Standalone public source — no private library dependency
-- [x] Synthetic catalog and REST filtering/pagination
-- [x] Optional Redis-backed cache-aside with local fallback
-- [x] Automated API tests
-- [x] Docker / Compose definition
-- [x] Java 21 Maven build and six tests verified by GitHub Actions (2026-11-17, [successful run](https://github.com/nohasanad321/job-agent-portfolio/actions/runs/44042041923))\n- [ ] Exercise Docker Compose with a running Redis container
-- [x] GitHub Actions CI passing (6 tests, 0 failures)
-- [ ] AWS ECR / ECS Fargate deployment and CloudWatch observability
-- [ ] Architecture diagram, screenshots, deployment evidence, and portfolio write-up
+Run all tests:
 
-The separate private personal job agent is intentionally out of scope.
+```bash
+./mvnw clean verify
+```
+
+The `.github/workflows/ci.yml` workflow runs Maven verification on pushes and pull requests targeting `main`.
+
+## AWS deployment design
+
+The `infra/aws` directory contains Terraform infrastructure configuration intended to demonstrate AWS deployment planning.
+
+The `.github/workflows/aws-readiness.yml` workflow initializes Terraform without a backend and validates configuration syntax and provider schemas.
+
+**No AWS infrastructure has been provisioned as part of this project.** Terraform validation demonstrates configuration readiness, not a successful live deployment or runtime performance.
+
+See [AWS infrastructure documentation](infra/aws/README.md) for details.
+
+## Scope and limitations
+
+This repository is a backend portfolio demonstration, not a production job-search platform.
+
+It does not currently include:
+
+- Live job-provider integrations
+- User accounts or authentication
+- Persisted search preferences
+- Implemented Redis caching
+- A frontend
+- A live AWS deployment
+
+These capabilities are deliberately outside the current demonstration scope.

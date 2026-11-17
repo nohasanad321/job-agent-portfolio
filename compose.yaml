@@ -1,7 +1,7 @@
 services:
   api:
     build: .
-    ports: ["8083:8083"]
+    ports: ["8084:8083"]
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
