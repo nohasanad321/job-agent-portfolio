@@ -50,8 +50,8 @@ Controllers validate paging. Services filter against a known catalog. Cache is b
 - [x] Optional Redis-backed cache-aside with local fallback
 - [x] Automated API tests
 - [x] Docker / Compose definition
-- [ ] Verify build/tests in a Java 21 runtime and exercise Docker Compose (changes were committed without executing tests in this environment)
-- [x] GitHub Actions workflow added (execution not yet confirmed)
+- [x] Java 21 Maven build and six tests verified by GitHub Actions (2026-11-17, [successful run](https://github.com/nohasanad321/job-agent-portfolio/actions/runs/44042041923))\n- [ ] Exercise Docker Compose with a running Redis container
+- [x] GitHub Actions CI passing (6 tests, 0 failures)
 - [ ] AWS ECR / ECS Fargate deployment and CloudWatch observability
 - [ ] Architecture diagram, screenshots, deployment evidence, and portfolio write-up
 
