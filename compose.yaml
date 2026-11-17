@@ -1,0 +1,11 @@
+services:
+  api:
+    build: .
+    ports: ["8083:8083"]
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on: [redis]
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server","--maxmemory","64mb","--maxmemory-policy","allkeys-lru"]

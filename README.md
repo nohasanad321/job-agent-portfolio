@@ -1,37 +1,58 @@
-# Job Agent Portfolio
+# Job Agent Portfolio — Standalone API Demo
 
-Independent Spring Boot application skeleton for eventually demonstrating user-configurable job searches, Spring Boot architecture, Redis caching, and AWS ECS Fargate deployment. It uses `job-agent-core:0.1.0-SNAPSHOT`, starts without Redis or AWS credentials, and does not fetch live job feeds during startup. No personal preferences, personal configuration, or placeholder search endpoint are included.
+A **public, self-contained Spring Boot 3.5 / Java 21** project demonstrating a synthetic job-discovery API, filtering, pagination, Redis cache-aside behavior, graceful operation when Redis is unavailable, containerization and automated endpoint tests.
 
-## Future search preferences
+**All job listings are fictional samples.** This repository does not retrieve real jobs, handle personal profiles, rank candidates, expose private matching rules, or depend on the private `job-agent-core` repository.
 
-Configurable searches should eventually accept user-supplied roles, skills, seniority, work arrangement, location eligibility, work-from-anywhere requirements, employment type, and salary amount, currency, and period. This repository does not yet implement configurable searches, authentication, saved accounts, or a frontend.
+## Quick start
 
-## Local build order
+```bash
+./mvnw clean test
+./mvnw spring-boot:run
+```
+Windows: `mvnw.cmd clean test` and `mvnw.cmd spring-boot:run`. Requires Java 21.
 
-Run these Windows PowerShell commands in order. Install core locally before building either application:
-
-```powershell
-Set-Location 'D:\OnlineWork\job-agent-core'
-.\mvnw.cmd clean install
-
-Set-Location 'D:\OnlineWork\remote-job-agent'
-.\mvnw.cmd clean package
-.\mvnw.cmd spring-boot:run
-
-Set-Location 'D:\OnlineWork\job-agent-portfolio'
-.\mvnw.cmd clean package
-.\mvnw.cmd spring-boot:run
+```bash
+curl 'http://localhost:8083/api/demo/jobs?region=Worldwide&skill=Java&page=0&size=5'
+curl 'http://localhost:8083/api/demo/jobs/DEMO-001'
+curl 'http://localhost:8083/actuator/health'
 ```
 
-Build both applications first, then run each `spring-boot:run` command in a separate PowerShell window; the personal app uses port `8082`, while this app uses port `8083`. Its health endpoint is `http://localhost:8083/actuator/health`. Each repository contains its own Maven Wrapper.
+## Run with Redis
 
-Separate repositories consume a versioned core artifact. Local Maven installation is the initial development workflow; remote CI and AWS builds will later need access to a published core artifact or an explicit core checkout/build step.
+```bash
+docker compose up --build
+```
 
-## Future work
+Redis is optional locally. The demo catalog is kept in memory, and cache failures fall back to it. The Redis health indicator is excluded so missing optional Redis does not mark the API unhealthy. Cache entries expire after 10 minutes.
 
-- Diagnose the personal application's known Arbeitnow `502 Bad Gateway` using the real server exception.
-- Implement configurable portfolio searches against user-supplied preferences.
-- Add Redis locally through Docker Compose.
-- Preserve last successful provider data when refresh fails, with explicit freshness and stale-retention rules.
-- Containerize and deploy the portfolio application to AWS ECS Fargate.
-- Add AWS-hosted Redis later.
+## API
+
+- `GET /api/demo/jobs`: optional query, region, type, seniority, skill, page (0-based), size (1–100)
+- `GET /api/demo/jobs/{id}`: one fictional job, or HTTP 404
+- `GET /actuator/health`: operational health
+
+Responses include `synthetic: true` and `source: DEMO_DATA_ONLY`.
+
+## Architecture
+
+```text
+HTTP client → REST Controller → Filter Service → Redis (optional cache)
+                                     ↘ Synthetic in-memory catalog
+```
+
+Controllers validate paging. Services filter against a known catalog. Cache is best-effort and only caches the whole synthetic catalog, not user-supplied queries. There is no account data, authentication or external provider integration.
+
+## Status and next milestones
+
+- [x] Standalone public source — no private library dependency
+- [x] Synthetic catalog and REST filtering/pagination
+- [x] Optional Redis-backed cache-aside with local fallback
+- [x] Automated API tests
+- [x] Docker / Compose definition
+- [ ] Verify build/tests in a Java 21 runtime and exercise Docker Compose (changes were committed without executing tests in this environment)
+- [ ] GitHub Actions CI
+- [ ] AWS ECR / ECS Fargate deployment and CloudWatch observability
+- [ ] Architecture diagram, screenshots, deployment evidence, and portfolio write-up
+
+The separate private personal job agent is intentionally out of scope.
